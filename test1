@@ -1,0 +1,22 @@
+import boto3
+import os
+
+def lambda_handler(event, context):
+    source_snapshot_id = event['source_snapshot_id']  # snapshot identifier to copy
+    target_snapshot_id = f"{source_snapshot_id}-test"  # target snapshot identifier
+    source_region = os.environ['SOURCE_REGION']
+    target_region = os.environ['TARGET_REGION']
+
+    rds_client = boto3.client('rds', region_name=target_region)
+
+    try:
+        response = rds_client.copy_db_snapshot(
+            SourceDBSnapshotIdentifier=f'arn:aws:rds:{source_region}:{event["account_id"]}:snapshot:{source_snapshot_id}',
+            TargetDBSnapshotIdentifier=target_snapshot_id,
+            SourceRegion=source_region
+        )
+        print(f"Snapshot {source_snapshot_id} copied to {target_snapshot_id}")
+        return response
+    except Exception as e:
+        print(f"Error copying snapshot: {e}")
+        raise e
